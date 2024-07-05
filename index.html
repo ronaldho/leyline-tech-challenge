@@ -1,0 +1,100 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"
+        integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA=="
+        crossorigin="anonymous" />
+</head>
+
+<body>
+
+    <iframe name="hiddenframe" style="display:none;"></iframe>
+    <form class="upload-form" method="POST" action="" enctype="multipart/form-data" target='hiddenframe'>
+        <input id='filename' type=file name=file accept="image/*">
+        <input id='upload-btn' type=submit value=Upload>
+    </form>
+
+
+
+    <div class="progress">
+        <div id='myProgress' class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0"
+            aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <div id='result'></div>
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+        integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"
+        integrity="sha512-XKa9Hemdy1Ui3KSGgJdgMyYlUg1gM+QhL6cnlyTe2qzMCYm4nAZ1PsVerQzTTXzonUR+dmswHqgJPuwCq1MaAg=="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+
+        const progressbar = document.getElementById('myProgress')
+        const uploadBtn = document.getElementById('upload-btn')
+
+        function progress_bar(value) {
+            progressbar.setAttribute("aria-valuenow", value);
+            roundVal = Math.round(value)
+            progressbar.style.width = roundVal + '%';
+
+            // progress bar should have label
+            progressbar.innerHTML = roundVal + '%';
+        }
+
+
+        const form = document.querySelector('.upload-form');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch('/', {
+                'method': 'POST',
+                'body': formData
+            }).then(resp => {
+                console.log('in form handler')
+                console.log(resp)
+                // handle response here
+                // job_id = 
+                let url = resp.url
+                // let params=url.search()
+                let job_id = /(?<=job_id=).*/.exec(url)
+                // params = getJsonFromUrl(resp.url)
+                // const urlParams = new URLSearchParams(resp.url);
+                // const myParam = urlParams.get('job_id');
+                // console.log(params)
+                const prog = new EventSource("/progress/" + job_id);
+                prog.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+                    console.log(data);
+
+                    progress_bar(data['value']);
+
+                    if (data['status'] == 'finished') {
+
+                        progress_bar(100);
+
+                        prog.close();
+
+                        document.getElementById('result').innerHTML +=
+                            data['result'] +
+                            `
+                        <br>
+                        <video class="result-video" width="320" height="240" autoplay muted>
+                            <source src="{{ url_for("static", filename="result.mp4" ) }}" type="video/mp4">
+                        </video>
+                        <br>
+                        `
+                    }
+                }
+            });
+        });
+
+
+    </script>
+
+</body>
+
+</html>
