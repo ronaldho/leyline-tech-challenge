@@ -1,9 +1,10 @@
-from flask import Flask, redirect, url_for, request, render_template, Response, flash, session
+from flask import Flask, redirect, url_for, request, render_template, Response, flash, session, jsonify, make_response
 from time import sleep
 
 from rq import Queue
 from rq.job import Job
 from rq import get_current_job
+from rq.registry import StartedJobRegistry
 
 from redis import Redis
 
@@ -46,6 +47,17 @@ def upload():
             value = uploaded_file.filename
             job = q.enqueue(ai_simulator, value)
     return redirect(url_for('index')+'?job_id='+job.id)
+
+@app.route('/overview/')
+def overview():
+    registry = StartedJobRegistry('default', connection=r)
+
+    running_job_ids = registry.get_job_ids()  # Jobs which are exactly running. 
+    response_data = jsonify({'data': running_job_ids})
+    resp = make_response(response_data, 201)
+    return resp
+
+
 
 @app.route('/progress/<string:job_id>')
 def progress(job_id):

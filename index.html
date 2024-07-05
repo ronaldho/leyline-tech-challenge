@@ -43,6 +43,32 @@
             progressbar.innerHTML = roundVal + '%';
         }
 
+        function progress(job_id){
+            const prog = new EventSource("/progress/" + job_id);
+            prog.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+
+                progress_bar(data['value']);
+
+                if (data['status'] == 'finished') {
+
+                    progress_bar(100);
+
+                    prog.close();
+
+                    document.getElementById('result').innerHTML +=
+                        data['result'] +
+                        `
+                        <br>
+                        <video class="result-video" width="320" height="240" autoplay muted>
+                            <source src="{{ url_for("static", filename="result.mp4" ) }}" type="video/mp4">
+                        </video>
+                        <br>
+                        `
+                }
+            }
+        }
+
 
         const form = document.querySelector('.upload-form');
         form.addEventListener('submit', function (event) {
@@ -57,31 +83,21 @@
 
                 let job_id = /(?<=job_id=).*/.exec(url)
 
-                const prog = new EventSource("/progress/" + job_id);
-                prog.onmessage = function (event) {
-                    const data = JSON.parse(event.data);
-                    console.log(data);
-
-                    progress_bar(data['value']);
-
-                    if (data['status'] == 'finished') {
-
-                        progress_bar(100);
-
-                        prog.close();
-
-                        document.getElementById('result').innerHTML +=
-                            data['result'] +
-                            `
-                        <br>
-                        <video class="result-video" width="320" height="240" autoplay muted>
-                            <source src="{{ url_for("static", filename="result.mp4" ) }}" type="video/mp4">
-                        </video>
-                        <br>
-                        `
-                    }
-                }
+                progress(job_id);
             });
+        });
+
+        addEventListener("DOMContentLoaded", (event) => {
+            fetch(`${window.origin}/overview`)
+            .then((r) => r.json())
+            .then(result=>{ 
+                //wait for promise
+
+                jobs = result['data']
+                if (jobs.length == 1){
+                    progress(jobs[0])
+                }
+            })
         });
 
 
