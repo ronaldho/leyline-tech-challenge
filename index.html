@@ -40,8 +40,6 @@
             progressbar.setAttribute("aria-valuenow", value);
             roundVal = Math.round(value)
             progressbar.style.width = roundVal + '%';
-
-            // progress bar should have label
             progressbar.innerHTML = roundVal + '%';
         }
 
@@ -54,17 +52,11 @@
                 'method': 'POST',
                 'body': formData
             }).then(resp => {
-                console.log('in form handler')
-                console.log(resp)
-                // handle response here
-                // job_id = 
+
                 let url = resp.url
-                // let params=url.search()
+
                 let job_id = /(?<=job_id=).*/.exec(url)
-                // params = getJsonFromUrl(resp.url)
-                // const urlParams = new URLSearchParams(resp.url);
-                // const myParam = urlParams.get('job_id');
-                // console.log(params)
+
                 const prog = new EventSource("/progress/" + job_id);
                 prog.onmessage = function (event) {
                     const data = JSON.parse(event.data);

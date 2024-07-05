@@ -45,9 +45,6 @@ def upload():
         if uploaded_file.filename != '':
             value = uploaded_file.filename
             job = q.enqueue(ai_simulator, value)
-            print(job.id)
-            # return {'job_id': job.id }
-            flash(job.id)
     return redirect(url_for('index')+'?job_id='+job.id)
 
 @app.route('/progress/<string:job_id>')
