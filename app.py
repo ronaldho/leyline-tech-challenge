@@ -40,7 +40,6 @@ def index():
 
 @app.route('/', methods=['POST'])
 def upload():
-    print('in upload')
     if request.method == 'POST':
         uploaded_file = request.files['file']
         if uploaded_file.filename != '':
